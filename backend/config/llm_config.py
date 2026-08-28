@@ -1,13 +1,14 @@
+import os
+import streamlit as st
 from google import genai
-from .env_config import envConfig
 
-#  Configuring Gemini
+# Read API Key from st.secrets or os.environ
+api_key = None
+if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+if not api_key:
+    api_key = os.getenv("GEMINI_API_KEY", "")
 
-# GEMINI_MODEL = "gemini-3.6-flash"
-GEMINI_MODEL = "gemini-3.5-flash"
-GEMINI_EMBEDDING_MODEL = "gemini-embedding-2"
-EMBEDDING_DIMENSION = 1536
-
-client = genai.Client(
-    api_key=envConfig.GEMINI_API_KEY
-    )
+# Initialize GenAI Client
+client = genai.Client(api_key=api_key)
+GEMINI_MODEL = "gemini-1.5-flash"
