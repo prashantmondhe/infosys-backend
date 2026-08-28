@@ -1,3 +1,9 @@
+﻿import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+sys.path.insert(0, os.path.join(current_dir, "backend"))
 import sys
 import os
 
@@ -30,11 +36,11 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_ROOT = PROJECT_ROOT / "backend"
 
-# Project root → allows: backend.GenAI...
+# Project root â†’ allows: backend.GenAI...
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Backend root → allows: config...
+# Backend root â†’ allows: config...
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
@@ -54,7 +60,7 @@ from backend.GenAI.ai_workflows.orchestration.rag_pipeline import (
 
 st.set_page_config(
     page_title="Enterprise GPT - AI Workflow Demo",
-    page_icon="🤖",
+    page_icon="ðŸ¤–",
     layout="wide",
 )
 
@@ -75,10 +81,10 @@ pipeline = load_pipeline()
 # Header
 # =====================================================
 
-st.title("🤖 Enterprise GPT")
+st.title("ðŸ¤– Enterprise GPT")
 
 st.caption(
-    "AI Workflow Demonstration — RAG, Hybrid Search, "
+    "AI Workflow Demonstration â€” RAG, Hybrid Search, "
     "Grounding & Citation Verification"
 )
 
@@ -89,7 +95,7 @@ st.caption(
 
 with st.sidebar:
 
-    st.header("⚙️ Query Configuration")
+    st.header("âš™ï¸ Query Configuration")
 
     designation = st.selectbox(
         "Designation",
@@ -119,23 +125,23 @@ with st.sidebar:
     st.markdown(
         """
         **1. Query Classification**  
-        ↓  
+        â†“  
         **2. RBAC Authorization**  
-        ↓  
+        â†“  
         **3. Hybrid Retrieval**  
-        ↓  
+        â†“  
         **4. RRF Fusion**  
-        ↓  
+        â†“  
         **5. Gemini 3.5 Flash Reranking**  
-        ↓  
+        â†“  
         **6. Grounded Synthesis**  
-        ↓  
+        â†“  
         **7. Citation Validation**  
-        ↓  
+        â†“  
         **8. Claim Verification**  
-        ↓  
+        â†“  
         **9. Citation Builder**  
-        ↓  
+        â†“  
         **10. Final Response**
         """
     )
@@ -158,7 +164,7 @@ query = st.text_area(
 
 
 ask = st.button(
-    "🔍 Ask",
+    "ðŸ” Ask",
     type="primary",
     use_container_width=True,
 )
@@ -218,7 +224,7 @@ if "rag_result" in st.session_state:
     # Final Answer
     # =================================================
 
-    st.subheader("💬 Answer")
+    st.subheader("ðŸ’¬ Answer")
 
     st.markdown(
         result.answer
@@ -228,7 +234,7 @@ if "rag_result" in st.session_state:
     # Citations
     # =================================================
 
-    st.subheader("📚 Citations")
+    st.subheader("ðŸ“š Citations")
 
     if result.citations:
 
@@ -278,7 +284,7 @@ if "rag_result" in st.session_state:
     st.divider()
 
     st.subheader(
-        "🔬 AI Pipeline Trace"
+        "ðŸ”¬ AI Pipeline Trace"
     )
 
     metadata = result.metadata
@@ -359,7 +365,7 @@ if "rag_result" in st.session_state:
     if verification_results:
 
         st.subheader(
-            "✓ Claim Verification"
+            "âœ“ Claim Verification"
         )
 
         for item in verification_results:
@@ -377,7 +383,7 @@ if "rag_result" in st.session_state:
             if supported:
 
                 st.success(
-                    f"✓ {item['claim']}\n\n"
+                    f"âœ“ {item['claim']}\n\n"
                     f"Support score: "
                     f"{score:.2f}"
                 )
@@ -385,7 +391,7 @@ if "rag_result" in st.session_state:
             else:
 
                 st.error(
-                    f"✗ {item['claim']}\n\n"
+                    f"âœ— {item['claim']}\n\n"
                     f"Support score: "
                     f"{score:.2f}\n\n"
                     f"Reason: "
@@ -397,7 +403,7 @@ if "rag_result" in st.session_state:
     # =================================================
 
     with st.expander(
-        "🛠️ Raw Pipeline Metadata"
+        "ðŸ› ï¸ Raw Pipeline Metadata"
     ):
 
         st.json(
