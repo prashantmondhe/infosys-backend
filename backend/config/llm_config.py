@@ -1,4 +1,4 @@
-import os
+﻿import os
 import streamlit as st
 from google import genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -21,12 +21,13 @@ client = genai.Client(api_key=api_key)
 # Model Definitions
 GEMINI_MODEL = "gemini-1.5-flash"
 GEMINI_MODEL_NAME = "gemini-1.5-flash"
+GEMINI_EMBEDDING_MODEL = "models/text-embedding-004"
 EMBEDDING_MODEL = "models/text-embedding-004"
-EMBEDDING_MODEL_NAME = "models/text-embedding-004"
+EMBEDDING_DIMENSION = 768
 
 # Embeddings object for Chroma Retriever
 embeddings = GoogleGenerativeAIEmbeddings(
-    model=EMBEDDING_MODEL,
+    model=GEMINI_EMBEDDING_MODEL,
     google_api_key=api_key
 )
 EMBEDDINGS = embeddings
