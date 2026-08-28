@@ -1,4 +1,23 @@
 import sys
+import os
+
+# Set root directory and backend directory in python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+sys.path.insert(0, os.path.join(current_dir, "backend"))
+
+
+import sys
+import os
+
+# Set root directory and backend directory in python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+sys.path.insert(0, os.path.join(current_dir, "backend"))
+
+
+
+import sys
 from pathlib import Path
 
 import streamlit as st
