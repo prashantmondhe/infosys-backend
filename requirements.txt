@@ -4,6 +4,8 @@ google-generativeai
 chromadb
 langchain
 langchain-community
+langchain-chroma
+langchain-google-genai
 pydantic
 pydantic-settings
 python-dotenv
