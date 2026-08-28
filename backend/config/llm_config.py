@@ -17,11 +17,17 @@ if api_key:
 
 # Initialize GenAI Client
 client = genai.Client(api_key=api_key)
+
+# Model Definitions
 GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL_NAME = "gemini-1.5-flash"
 EMBEDDING_MODEL = "models/text-embedding-004"
+EMBEDDING_MODEL_NAME = "models/text-embedding-004"
 
 # Embeddings object for Chroma Retriever
 embeddings = GoogleGenerativeAIEmbeddings(
     model=EMBEDDING_MODEL,
     google_api_key=api_key
 )
+EMBEDDINGS = embeddings
+GOOGLE_API_KEY = api_key
