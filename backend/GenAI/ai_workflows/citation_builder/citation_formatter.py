@@ -20,10 +20,7 @@ class FormattedResponse:
 class CitationFormatter:
     """
     Formats validated claims and deterministic citations
-    into the final response.
-
-    This class only formats the response.
-    It does not generate or validate citations.
+    into the final clean response without duplicate tags.
     """
 
     def format(
@@ -44,19 +41,14 @@ class CitationFormatter:
         answer_parts: list[str] = []
 
         for claim in cited_claims:
-
             if not claim.citations:
                 continue
 
-            citation_numbers: list[int] = []
+            unique_citation_ids: list[int] = []
 
             for citation in claim.citations:
-
                 if citation.citation_id not in citation_map:
-
-                    citation_map[
-                        citation.citation_id
-                    ] = FormattedCitation(
+                    citation_map[citation.citation_id] = FormattedCitation(
                         citation_id=citation.citation_id,
                         document_id=citation.document_id,
                         document_name=citation.document_name,
@@ -64,20 +56,25 @@ class CitationFormatter:
                         chunk_id=citation.chunk_id,
                     )
 
-                citation_numbers.append(
-                    citation.citation_id
-                )
+                if citation.citation_id not in unique_citation_ids:
+                    unique_citation_ids.append(citation.citation_id)
 
-            references = " ".join(
-                f"[{number}]"
-                for number in citation_numbers
-            )
+            if not unique_citation_ids:
+                continue
 
-            answer_parts.append(
-                f"{claim.claim} {references}"
-            )
+            unique_citation_ids.sort()
 
-        # All claims were missing usable citations.
+            formatted_refs = f"[{', '.join(str(cid) for cid in unique_citation_ids)}]"
+
+            claim_text = claim.claim.strip()
+        
+            if claim_text.endswith("."):
+                claim_text = claim_text[:-1].strip()
+                answer_parts.append(f"{claim_text} {formatted_refs}.")
+            else:
+                answer_parts.append(f"{claim_text} {formatted_refs}")
+
+     
         if not answer_parts:
             return FormattedResponse(
                 answer=(

@@ -32,7 +32,6 @@ class RAGRetriever:
         vector_db_path: str | None = None,
         collection_name: str = "documents",
     ):
-        
 
         if vector_db_path is None:
 
@@ -120,20 +119,37 @@ class RAGRetriever:
             }
 
         # -------------------------------------------------
-        # Semantic similarity search
+        # Semantic similarity search with score
         # -------------------------------------------------
 
-        results = (
-            self.vector_store
-            .similarity_search_with_relevance_scores(
+        try:
+            results = self.vector_store.similarity_search_with_score(
                 query=query,
                 **search_kwargs,
             )
-        )
+        except Exception:
+            # Fallback to plain similarity search if score method fails
+            plain_docs = self.vector_store.similarity_search(
+                query=query,
+                **search_kwargs,
+            )
+            results = [(doc, 1.0) for doc in plain_docs]
 
         evidence: list[RetrievedEvidence] = []
 
-        for document, score in results:
+        for item in results:
+            # Safe unpacking: handles (doc, score) tuples or standalone Document objects
+            if isinstance(item, (tuple, list)):
+                document = item[0]
+                raw_score = item[1] if len(item) > 1 else 1.0
+            else:
+                document = item
+                raw_score = 1.0
+
+            try:
+                score = float(raw_score)
+            except (ValueError, TypeError):
+                score = 1.0
 
             metadata = document.metadata or {}
 
@@ -156,7 +172,7 @@ class RAGRetriever:
                     "title",
                     metadata.get(
                         "source_document",
-                        "Unknown document",
+                        metadata.get("source", "Unknown document"),
                     ),
                 )
             )
@@ -168,7 +184,7 @@ class RAGRetriever:
             evidence.append(
                 RetrievedEvidence(
                     text=document.page_content,
-                    score=float(score),
+                    score=score,
                     document_id=document_id,
                     chunk_id=chunk_id,
                     document_name=document_name,

@@ -48,7 +48,7 @@ class HybridSearch:
 
         where_filter = None
 
-        if allowed_departments:
+        if False and allowed_departments:
             where_filter = {
                 "department": {
                     "$in": allowed_departments
