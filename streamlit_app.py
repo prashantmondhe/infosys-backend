@@ -75,27 +75,13 @@ if prompt := st.chat_input("Type your question here..."):
         else:
             with st.spinner("Analyzing and answering..."):
                 try:
-                    # उपलब्ध योग्य मेथड शोधून रन करणे
-                    if hasattr(pipeline, "process_query"):
-                        response_text = pipeline.process_query(prompt)
-                    elif hasattr(pipeline, "run"):
-                        response_text = pipeline.run(prompt)
-                    elif hasattr(pipeline, "query"):
-                        response_text = pipeline.query(prompt)
-                    elif hasattr(pipeline, "ask"):
-                        response_text = pipeline.ask(prompt)
-                    elif hasattr(pipeline, "get_answer"):
-                        response_text = pipeline.get_answer(prompt)
-                    elif hasattr(pipeline, "generate_response"):
-                        response_text = pipeline.generate_response(prompt)
-                    elif hasattr(pipeline, "execute"):
-                        response_text = pipeline.execute(prompt)
+                    # pipeline.answer() थेट कॉल करणे
+                    if hasattr(pipeline, "answer"):
+                        response_text = pipeline.answer(prompt)
                     else:
-                        # जर कोणतीही ओळख पटली नाही तर सर्व ॲट्रिब्युट्स तपासणे
-                        methods = [m for m in dir(pipeline) if not m.startswith("_") and callable(getattr(pipeline, m))]
-                        response_text = f"Method not matched. Available methods in pipeline: {methods}"
+                        response_text = str(pipeline.run(prompt))
 
-                    # जर रिस्पॉन्स Dictionary असेल तर टेक्स्ट वेगळे करणे
+                    # जर रिस्पॉन्स Dictionary किंवा Object असेल तर टेक्स्ट वेगळे करणे
                     if isinstance(response_text, dict):
                         response_text = (
                             response_text.get("answer")
@@ -104,6 +90,8 @@ if prompt := st.chat_input("Type your question here..."):
                             or response_text.get("result")
                             or str(response_text)
                         )
+                    elif hasattr(response_text, "content"):
+                        response_text = response_text.content
 
                     st.markdown(response_text)
                 except Exception as ex:
