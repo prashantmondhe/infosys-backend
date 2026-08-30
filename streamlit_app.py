@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import streamlit as st
 
-# १. डिरेक्टरी पाथ्स योग्य क्रमाने सिस्टीम पाथमध्ये जोडणे
+# १. डिरेक्टरी पाथ्स सिस्टीम पाथमध्ये जोडणे
 CURRENT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = CURRENT_DIR / "backend"
 
@@ -19,10 +19,20 @@ try:
 except Exception:
     pass
 
-# ३. UI कॉन्फिगरेशन
+# ३. UI व साइडबार कॉन्फिगरेशन
 st.set_page_config(page_title="Enterprise GPT Portal", page_icon="🤖", layout="wide")
 st.title("Enterprise GPT Portal")
 st.caption("Ask questions related to enterprise documents, policies, and workflows.")
+
+# साइडबारमध्ये Role / Designation निवडणे
+with st.sidebar:
+    st.header("User Context")
+    selected_role = st.selectbox(
+        "Select Your Designation / Role:",
+        ["Employee", "HR Operations Lead", "Admin", "Manager", "Intern"],
+        index=0
+    )
+    st.info(f"Queries will be processed with **{selected_role}** permissions.")
 
 # ४. RAG Pipeline लोड करणे
 pipeline_obj = None
@@ -75,13 +85,13 @@ if prompt := st.chat_input("Type your question here..."):
         else:
             with st.spinner("Analyzing and answering..."):
                 try:
-                    # pipeline.answer() थेट कॉल करणे
-                    if hasattr(pipeline, "answer"):
-                        response_text = pipeline.answer(prompt)
-                    else:
-                        response_text = str(pipeline.run(prompt))
+                    # RAGPipeline.answer(query, designation) कॉल करणे
+                    try:
+                        response_text = pipeline.answer(prompt, designation=selected_role)
+                    except TypeError:
+                        response_text = pipeline.answer(prompt, selected_role)
 
-                    # जर रिस्पॉन्स Dictionary किंवा Object असेल तर टेक्स्ट वेगळे करणे
+                    # Dictionary किंवा ऑब्जेक्टमधून उत्तर वेगळे करणे
                     if isinstance(response_text, dict):
                         response_text = (
                             response_text.get("answer")
