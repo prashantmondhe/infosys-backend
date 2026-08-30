@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 import streamlit as st
+import google.generativeai as genai
 
 # १. डिरेक्टरी पाथ्स सिस्टीम पाथमध्ये जोडणे
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -19,12 +20,24 @@ try:
 except Exception:
     pass
 
-# ३. UI व साइडबार कॉन्फिगरेशन
+# ३. Google Generative AI API Key कॉन्फिगरेशन
+api_key = (
+    st.secrets.get("GEMINI_API_KEY") 
+    or st.secrets.get("GOOGLE_API_KEY") 
+    or os.getenv("GEMINI_API_KEY") 
+    or os.getenv("GOOGLE_API_KEY")
+)
+
+if api_key:
+    genai.configure(api_key=api_key)
+    os.environ["GEMINI_API_KEY"] = api_key
+    os.environ["GOOGLE_API_KEY"] = api_key
+
+# ४. UI व साइडबार कॉन्फिगरेशन
 st.set_page_config(page_title="Enterprise GPT Portal", page_icon="🤖", layout="wide")
 st.title("Enterprise GPT Portal")
 st.caption("Ask questions related to enterprise documents, policies, and workflows.")
 
-# साइडबारमध्ये Role / Designation निवडणे
 with st.sidebar:
     st.header("User Context")
     selected_role = st.selectbox(
@@ -34,7 +47,7 @@ with st.sidebar:
     )
     st.info(f"Queries will be processed with **{selected_role}** permissions.")
 
-# ४. RAG Pipeline लोड करणे
+# ५. RAG Pipeline लोड करणे
 pipeline_obj = None
 import_error_msg = None
 
@@ -61,7 +74,7 @@ def init_pipeline():
 
 pipeline = init_pipeline()
 
-# ५. चॅट मेसेज हिस्ट्री
+# ६. चॅट मेसेज हिस्ट्री
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Hello! How can I assist you with enterprise documents or policies today?"}
@@ -71,7 +84,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ६. युझर इनपुट आणि एक्झिक्युशन
+# ७. युझर इनपुट आणि एक्झिक्युशन
 if prompt := st.chat_input("Type your question here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):

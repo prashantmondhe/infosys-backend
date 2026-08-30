@@ -1,8 +1,11 @@
 import sys
 from pathlib import Path
+from typing import Optional, List, Any
 
-import streamlit as st
-
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import uvicorn
 
 # =====================================================
 # Python paths
@@ -11,376 +14,116 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_ROOT = PROJECT_ROOT / "backend"
 
-# Project root → allows: backend.GenAI...
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Backend root → allows: config...
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-
 # =====================================================
-# RAG Pipeline
+# RAG Pipeline Import
 # =====================================================
 
 from backend.GenAI.ai_workflows.orchestration.rag_pipeline import (
     RAGPipeline,
 )
 
-
 # =====================================================
-# Page configuration
+# Initialize FastAPI App & CORS
 # =====================================================
 
-st.set_page_config(
-    page_title="Enterprise GPT - AI Workflow Demo",
-    page_icon="🤖",
-    layout="wide",
+app = FastAPI(
+    title="Enterprise GPT API",
+    description="FastAPI backend providing RAG Pipeline query capabilities",
+    version="1.0.0"
 )
 
-
-# =====================================================
-# Initialize pipeline
-# =====================================================
-
-@st.cache_resource
-def load_pipeline():
-    return RAGPipeline()
-
-
-pipeline = load_pipeline()
-
-
-# =====================================================
-# Header
-# =====================================================
-
-st.title("🤖 Enterprise GPT")
-
-st.caption(
-    "AI Workflow Demonstration — RAG, Hybrid Search, "
-    "Grounding & Citation Verification"
+# Enable CORS for Next.js frontend (Vercel & Localhost)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-
 # =====================================================
-# Sidebar
-# =====================================================
-
-with st.sidebar:
-
-    st.header("⚙️ Query Configuration")
-
-    designation = st.selectbox(
-        "Designation",
-        [
-            "Software Engineer",
-            "Senior Software Engineer",
-            "DevOps Lead",
-            "Solutions Architect",
-            "Engineering Lead",
-            "Sales Executive",
-            "Business Development Manager",
-            "Account Manager",
-            "Sales Enablement Lead",
-            "Delivery Manager",
-            "PMO Lead",
-            "Operations Lead",
-            "HR Associate",
-            "HR Operations Lead",
-            "Senior Manager",
-        ],
-    )
-
-    st.divider()
-
-    st.markdown("### AI Pipeline")
-
-    st.markdown(
-        """
-        **1. Query Classification**  
-        ↓  
-        **2. RBAC Authorization**  
-        ↓  
-        **3. Hybrid Retrieval**  
-        ↓  
-        **4. RRF Fusion**  
-        ↓  
-        **5. Gemini 3.5 Flash Reranking**  
-        ↓  
-        **6. Grounded Synthesis**  
-        ↓  
-        **7. Citation Validation**  
-        ↓  
-        **8. Claim Verification**  
-        ↓  
-        **9. Citation Builder**  
-        ↓  
-        **10. Final Response**
-        """
-    )
-
-
-# =====================================================
-# Query
+# Initialize RAG Pipeline Instance
 # =====================================================
 
-st.subheader("Ask Enterprise GPT")
-
-query = st.text_area(
-    "Enter your question",
-    placeholder=(
-        "Example: What is the annual casual "
-        "leave entitlement?"
-    ),
-    height=100,
-)
-
-
-ask = st.button(
-    "🔍 Ask",
-    type="primary",
-    use_container_width=True,
-)
-
+try:
+    pipeline = RAGPipeline()
+except Exception as e:
+    print(f"Warning: RAG Pipeline initialization deferred or failed: {e}")
+    pipeline = None
 
 # =====================================================
-# Execute pipeline
+# Request / Response Schemas
 # =====================================================
 
-if ask:
-
-    if not query.strip():
-
-        st.warning(
-            "Please enter a question."
-        )
-
-    else:
-
-        with st.spinner(
-            "Running AI workflow..."
-        ):
-
-            try:
-
-                result = pipeline.answer(
-                    query=query,
-                    designation=designation,
-                )
-
-                st.session_state[
-                    "rag_result"
-                ] = result
-
-            except Exception as exc:
-
-                st.error(
-                    f"Pipeline error: {exc}"
-                )
-
-                st.exception(exc)
-
+class QueryRequest(BaseModel):
+    query: str
+    designation: Optional[str] = "HR Operations Lead"
 
 # =====================================================
-# Display result
+# API Endpoints
 # =====================================================
 
-if "rag_result" in st.session_state:
+@app.get("/")
+def health_check():
+    return {
+        "status": "success",
+        "message": "Enterprise GPT Backend is running on Port 8000"
+    }
 
-    result = st.session_state[
-        "rag_result"
-    ]
+@app.post("/api/query")
+@app.post("/query")
+async def execute_query(payload: QueryRequest):
+    global pipeline
+    if not payload.query or not payload.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    st.divider()
-
-    # =================================================
-    # Final Answer
-    # =================================================
-
-    st.subheader("💬 Answer")
-
-    st.markdown(
-        result.answer
-    )
-
-    # =================================================
-    # Citations
-    # =================================================
-
-    st.subheader("📚 Citations")
-
-    if result.citations:
-
-        for citation in result.citations:
-
-            with st.expander(
-                f"[{citation.citation_id}] "
-                f"{citation.document_name}"
-            ):
-
-                col1, col2 = st.columns(2)
-
-                with col1:
-
-                    st.write(
-                        "**Document ID:**",
-                        citation.document_id,
-                    )
-
-                    st.write(
-                        "**Chunk ID:**",
-                        citation.chunk_id,
-                    )
-
-                with col2:
-
-                    st.write(
-                        "**Page:**",
-                        (
-                            citation.page_number
-                            if citation.page_number
-                            is not None
-                            else "N/A"
-                        ),
-                    )
-
-    else:
-
-        st.info(
-            "No citations were generated."
-        )
-
-    # =================================================
-    # Pipeline Trace
-    # =================================================
-
-    st.divider()
-
-    st.subheader(
-        "🔬 AI Pipeline Trace"
-    )
-
-    metadata = result.metadata
-
-    # -------------------------------------------------
-    # Pipeline status
-    # -------------------------------------------------
-
-    status = metadata.get(
-        "pipeline_status",
-        "unknown",
-    )
-
-    if status == "success":
-
-        st.success(
-            "Pipeline completed successfully."
-        )
-
-    else:
-
-        st.info(
-            f"Pipeline status: {status}"
-        )
-
-    # -------------------------------------------------
-    # Metrics
-    # -------------------------------------------------
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-
-        st.metric(
-            "Retrieved",
-            metadata.get(
-                "retrieved_count",
-                0,
-            ),
-        )
-
-    with col2:
-
-        st.metric(
-            "Final Evidence",
-            metadata.get(
-                "final_evidence_count",
-                0,
-            ),
-        )
-
-    with col3:
-
-        st.metric(
-            "Verified Claims",
-            metadata.get(
-                "verified_claim_count",
-                0,
-            ),
-        )
-
-    with col4:
-
-        st.metric(
-            "Citations",
-            len(result.citations),
-        )
-
-    # =================================================
-    # Verification Results
-    # =================================================
-
-    verification_results = metadata.get(
-        "verification_results",
-        [],
-    )
-
-    if verification_results:
-
-        st.subheader(
-            "✓ Claim Verification"
-        )
-
-        for item in verification_results:
-
-            score = item.get(
-                "support_score",
-                0,
+    if pipeline is None:
+        try:
+            pipeline = RAGPipeline()
+        except Exception as err:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to load RAG Pipeline: {str(err)}"
             )
 
-            supported = item.get(
-                "supported",
-                False,
-            )
-
-            if supported:
-
-                st.success(
-                    f"✓ {item['claim']}\n\n"
-                    f"Support score: "
-                    f"{score:.2f}"
-                )
-
-            else:
-
-                st.error(
-                    f"✗ {item['claim']}\n\n"
-                    f"Support score: "
-                    f"{score:.2f}\n\n"
-                    f"Reason: "
-                    f"{item.get('reason', 'N/A')}"
-                )
-
-    # =================================================
-    # Raw Pipeline Metadata
-    # =================================================
-
-    with st.expander(
-        "🛠️ Raw Pipeline Metadata"
-    ):
-
-        st.json(
-            metadata
+    try:
+        # Execute enterprise RAG pipeline
+        result = pipeline.answer(
+            query=payload.query.strip(),
+            designation=payload.designation or "HR Operations Lead",
         )
+
+        # Format citations
+        citations_data = []
+        if hasattr(result, "citations") and result.citations:
+            for c in result.citations:
+                citations_data.append({
+                    "citation_id": getattr(c, "citation_id", None),
+                    "document_name": getattr(c, "document_name", None),
+                    "document_id": getattr(c, "document_id", None),
+                    "chunk_id": getattr(c, "chunk_id", None),
+                    "page_number": getattr(c, "page_number", None),
+                })
+
+        return {
+            "status": "success",
+            "answer": result.answer if hasattr(result, "answer") else str(result),
+            "citations": citations_data,
+            "metadata": getattr(result, "metadata", {})
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Pipeline execution error: {str(exc)}"
+        )
+
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
