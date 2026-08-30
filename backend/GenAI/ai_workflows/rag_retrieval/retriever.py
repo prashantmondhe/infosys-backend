@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Any, List
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 try:
     import streamlit as st
@@ -32,37 +33,37 @@ class RetrievedEvidence:
 
 
 # ----------------------------------------------------------------------
-# 1. Official Google SDK वर आधारित Direct Embeddings Class
-# (हा क्लास OAuth ऐवजी थेट API Key वापरतो, ज्यामुळे 401 एरर येत नाही)
+# Modern Google GenAI Client Embeddings (No OAuth Confusion)
 # ----------------------------------------------------------------------
-class DirectGeminiEmbeddings(Embeddings):
-    def __init__(self, api_key: str, model_name: str = "models/text-embedding-004"):
-        self.model_name = model_name
+class DirectGenAIEmbeddings(Embeddings):
+    def __init__(self, api_key: str, model_name: str = "text-embedding-004"):
         self.api_key = api_key
-        genai.configure(api_key=self.api_key)
+        # Clean model name if passed with 'models/' prefix
+        self.model_name = model_name.replace("models/", "")
+        self.client = genai.Client(api_key=self.api_key)
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         results = []
         for text in texts:
-            response = genai.embed_content(
+            response = self.client.models.embed_content(
                 model=self.model_name,
-                content=text,
-                task_type="retrieval_document"
+                contents=text,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
             )
-            results.append(response['embedding'])
+            results.append(response.embedding.values)
         return results
 
     def embed_query(self, text: str) -> List[float]:
-        response = genai.embed_content(
+        response = self.client.models.embed_content(
             model=self.model_name,
-            content=text,
-            task_type="retrieval_query"
+            contents=text,
+            config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
         )
-        return response['embedding']
+        return response.embedding.values
 
 
 # ----------------------------------------------------------------------
-# 2. RAG Retriever Class
+# RAG Retriever
 # ----------------------------------------------------------------------
 class RAGRetriever:
 
@@ -78,7 +79,7 @@ class RAGRetriever:
             )
             vector_db_path = os.path.join(project_root, "vector_db")
 
-        # API Key मिळवणे
+        # Key मिळवणे
         api_key = (
             (st.secrets.get("GEMINI_API_KEY") if st and hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets else None)
             or (st.secrets.get("GOOGLE_API_KEY") if st and hasattr(st, "secrets") and "GOOGLE_API_KEY" in st.secrets else None)
@@ -88,15 +89,15 @@ class RAGRetriever:
         )
 
         if not api_key:
-            raise ValueError("GEMINI_API_KEY is not configured in secrets or environment.")
+            raise ValueError("GEMINI_API_KEY is not configured.")
 
-        # डायरेक्ट गुगल एम्बेडिंग्स वापरणे
-        self.embeddings = DirectGeminiEmbeddings(
+        # आधुनिक Google SDK द्वारे Embeddings
+        self.embeddings = DirectGenAIEmbeddings(
             api_key=api_key,
-            model_name=GEMINI_EMBEDDING_MODEL or "models/text-embedding-004"
+            model_name="text-embedding-004"
         )
 
-        # ChromaDB कनेक्शन
+        # ChromaDB इनिशियलायझेशन
         self.vector_store = Chroma(
             persist_directory=vector_db_path,
             embedding_function=self.embeddings,
