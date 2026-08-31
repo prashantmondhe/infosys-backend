@@ -1,12 +1,11 @@
-import os
 import warnings
 from dataclasses import dataclass, field
 from typing import Any, List
 from google import genai
 from google.genai import types
 
-from config.env_config import envConfig
-from config.llm_config import GEMINI_MODEL
+from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
+from backend.config.llm_config import GEMINI_MODEL
 
 # Suppress AFC user warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -46,7 +45,7 @@ class QueryClassifier:
     """
 
     def __init__(self):
-        api_key = envConfig.GEMINI_API_KEY
+        api_key = GEMINI_API_KEY or GOOGLE_API_KEY
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not configured in environment.")
 
