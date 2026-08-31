@@ -3,30 +3,17 @@ from dotenv import load_dotenv
 from google import genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
+
 load_dotenv()
 
-api_key = (
-    os.getenv("GEMINI_API_KEY")
-    or os.getenv("GOOGLE_API_KEY")
-    or ""
-)
-
-if not api_key:
-    try:
-        import streamlit as st
-        try:
-            api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY") or ""
-        except Exception:
-            pass
-    except Exception:
-        pass
-
+api_key = GEMINI_API_KEY or GOOGLE_API_KEY
 
 if api_key:
     os.environ["GOOGLE_API_KEY"] = api_key
     os.environ["GEMINI_API_KEY"] = api_key
 
-# ३. Client व Models कॉ
+# ३. Client व Models
 client = genai.Client(api_key=api_key) if api_key else None
 
 GEMINI_MODEL = "gemini-3.6-flash"

@@ -1,21 +1,8 @@
 import os
+from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
 
 # सुरक्षितपणे API Key मिळवणे
-api_key = (
-    os.getenv("GEMINI_API_KEY")
-    or os.getenv("GOOGLE_API_KEY")
-    or ""
-)
-
-if not api_key:
-    try:
-        import streamlit as st
-        try:
-            api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY") or ""
-        except Exception:
-            pass
-    except Exception:
-        pass
+api_key = GEMINI_API_KEY or GOOGLE_API_KEY
 
 if api_key:
     os.environ["GOOGLE_API_KEY"] = api_key
