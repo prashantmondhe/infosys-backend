@@ -3,45 +3,7 @@ import sys
 from pathlib import Path
 
 # =====================================================
-# 1. Force Physical secrets.toml Creation on Linux Disk
-# =====================================================
-api_key = (
-    os.getenv("GOOGLE_API_KEY")
-    or os.getenv("GEMINI_API_KEY")
-    or os.getenv("OPENAI_API_KEY")
-    or ""
-)
-
-secrets_body = f"""GOOGLE_API_KEY = "{api_key}"
-GEMINI_API_KEY = "{api_key}"
-
-[default]
-GOOGLE_API_KEY = "{api_key}"
-GEMINI_API_KEY = "{api_key}"
-"""
-
-for target_dir in [
-    Path("/root/.streamlit"),
-    Path("/app/.streamlit"),
-    Path.home() / ".streamlit",
-    Path.cwd() / ".streamlit"
-]:
-    try:
-        target_dir.mkdir(parents=True, exist_ok=True)
-        (target_dir / "secrets.toml").write_text(secrets_body.strip(), encoding="utf-8")
-    except Exception:
-        pass
-
-# Streamlit in-memory mock
-try:
-    import streamlit as st
-    st.secrets["GOOGLE_API_KEY"] = api_key
-    st.secrets["GEMINI_API_KEY"] = api_key
-except Exception:
-    pass
-
-# =====================================================
-# 2. Path Setup
+# 1. Path Setup
 # =====================================================
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_ROOT = PROJECT_ROOT / "backend"
@@ -50,6 +12,17 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+
+# =====================================================
+# 2. Environment Variables (फक्त env_config.py वरून, st.secrets नाही)
+# =====================================================
+from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
+
+api_key = GOOGLE_API_KEY or GEMINI_API_KEY
+
+if api_key:
+    os.environ["GOOGLE_API_KEY"] = api_key
+    os.environ["GEMINI_API_KEY"] = api_key
 
 # =====================================================
 # 3. FastAPI Initialization & RAG Pipeline
