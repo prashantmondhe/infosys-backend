@@ -25,7 +25,7 @@ if api_key:
     os.environ["GEMINI_API_KEY"] = api_key
 
 # =====================================================
-# 3. FastAPI Initialization & RAG Pipeline
+# 3. FastAPI Initialization  and RAG Pipeline 
 # =====================================================
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
