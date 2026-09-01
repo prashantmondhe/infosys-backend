@@ -74,15 +74,15 @@ class QueryClassifier:
         prompt = f"User Query: {query}\nRelevant Departments:"
 
         try:
-            chat = self.client.chats.create(
+            response = self.client.models.generate_content(
                 model=self.model_name,
+                contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
                     temperature=0.0,
                 ),
             )
 
-            response = chat.send_message(prompt)
             result_text = response.text.strip() if response.text else "HR"
 
             departments = [dept.strip() for dept in result_text.split(",") if dept.strip()]
