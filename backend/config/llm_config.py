@@ -1,7 +1,6 @@
 ﻿import os
 from dotenv import load_dotenv
 from google import genai
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
 
@@ -24,9 +23,4 @@ GEMINI_EMBEDDING_MODEL = "models/gemini-embedding-2"
 EMBEDDING_MODEL = "models/gemini-embedding-2"
 EMBEDDING_DIMENSION = 3072
 
-embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/gemini-embedding-2",
-    google_api_key=api_key
-)
-EMBEDDINGS = embeddings
 GOOGLE_API_KEY = api_key
