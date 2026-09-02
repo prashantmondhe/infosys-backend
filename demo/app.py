@@ -18,14 +18,21 @@ if str(BACKEND_ROOT) not in sys.path:
 # =====================================================
 from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
 
+print(f"[DEBUG] os.environ GEMINI_API_KEY ends with: ...{os.environ.get('GEMINI_API_KEY', 'NOT SET')[-10:]}")
+print(f"[DEBUG] os.environ GOOGLE_API_KEY ends with: ...{os.environ.get('GOOGLE_API_KEY', 'NOT SET')[-10:]}")
+print(f"[DEBUG] env_config.GEMINI_API_KEY ends with: ...{(GEMINI_API_KEY or 'NOT SET')[-10:]}")
+print(f"[DEBUG] env_config.GOOGLE_API_KEY ends with: ...{(GOOGLE_API_KEY or 'NOT SET')[-10:]}")
+
 api_key = GOOGLE_API_KEY or GEMINI_API_KEY
+
+print(f"[DEBUG] Final api_key used ends with: ...{(api_key or 'NOT SET')[-10:]}")
 
 if api_key:
     os.environ["GOOGLE_API_KEY"] = api_key
     os.environ["GEMINI_API_KEY"] = api_key
 
 # =====================================================
-# 3. FastAPI Initialization  and RAG Pipeline 
+# 3. FastAPI Initialization & RAG Pipeline
 # =====================================================
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
