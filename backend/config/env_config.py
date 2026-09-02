@@ -17,5 +17,9 @@ try:
 except Exception:
     pass
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+
+
+
+
+GEMINI_API_KEY = os.getenv("GEMINI_KEY_FRESH") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
 GOOGLE_API_KEY = GEMINI_API_KEY
