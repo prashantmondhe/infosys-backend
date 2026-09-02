@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Streamlit Cloud वर deploy केलं असेल तरच हे काम करेल, Railway वर हा भाग सायलेंटली स्किप होतो
 try:
     import streamlit as st
     try:
