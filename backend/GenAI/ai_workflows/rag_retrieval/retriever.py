@@ -32,7 +32,7 @@ class DirectGenAIEmbeddings(Embeddings):
         self.api_key = api_key
         # Clean model name if passed with 'models/' prefix
         self.model_name = model_name.replace("models/", "")
-        self.client = genai.Client(api_key=self.api_key)
+        self.client = genai.Client(api_key=self.api_key, vertexai=False)
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         results = []
@@ -81,7 +81,7 @@ class RAGRetriever:
         # आधुनिक Google SDK द्वारे Embeddings
         self.embeddings = DirectGenAIEmbeddings(
             api_key=api_key,
-            model_name="text-embedding-004"
+            model_name=GEMINI_EMBEDDING_MODEL
         )
 
         # ChromaDB इनिशियलायझेशन

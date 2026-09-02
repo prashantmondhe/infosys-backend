@@ -13,7 +13,7 @@ if api_key:
     os.environ["GEMINI_API_KEY"] = api_key
 
 # ३. Client व Models
-client = genai.Client(api_key=api_key) if api_key else None
+client = genai.Client(api_key=api_key, vertexai=False) if api_key else None
 
 GEMINI_MODEL = "gemini-3.6-flash"
 GEMINI_MODEL_NAME = "gemini-3.6-flash"

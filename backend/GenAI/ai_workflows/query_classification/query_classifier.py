@@ -49,7 +49,7 @@ class QueryClassifier:
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not configured in environment.")
 
-        self.client = genai.Client(api_key=api_key)
+        self.client = genai.Client(api_key=api_key, vertexai=False)
         self.model_name = GEMINI_MODEL
 
     def classify(self, query: str) -> QueryClassificationResult:
