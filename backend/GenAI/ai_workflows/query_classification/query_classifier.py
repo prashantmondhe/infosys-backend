@@ -1,8 +1,7 @@
 import warnings
+import requests
 from dataclasses import dataclass, field
 from typing import Any, List
-from google import genai
-from google.genai import types
 
 from backend.config.env_config import GEMINI_API_KEY, GOOGLE_API_KEY
 from backend.config.llm_config import GEMINI_MODEL
@@ -42,6 +41,11 @@ class QueryClassificationResult:
 class QueryClassifier:
     """
     Classifies incoming user queries and checks routing/clarification requirements.
+
+    Uses a direct REST call to the Gemini API instead of the google-genai SDK,
+    because the SDK incorrectly triggers Vertex AI / OAuth authentication mode
+    with certain API key formats (e.g. keys starting with "AQ."), causing
+    401 UNAUTHENTICATED errors even though the key itself is valid.
     """
 
     def __init__(self):
@@ -49,8 +53,12 @@ class QueryClassifier:
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not configured in environment.")
 
-        self.client = genai.Client(api_key=api_key, vertexai=False)
-        self.model_name = GEMINI_MODEL
+        self.api_key = api_key
+        self.model_name = GEMINI_MODEL.replace("models/", "")
+        self.endpoint = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.model_name}:generateContent?key={self.api_key}"
+        )
 
     def classify(self, query: str) -> QueryClassificationResult:
         """
@@ -73,17 +81,30 @@ class QueryClassifier:
 
         prompt = f"User Query: {query}\nRelevant Departments:"
 
-        try:
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.0,
-                ),
-            )
+        payload = {
+            "system_instruction": {
+                "parts": [{"text": system_instruction}]
+            },
+            "contents": [
+                {"parts": [{"text": prompt}]}
+            ],
+            "generationConfig": {
+                "temperature": 0.0
+            },
+        }
 
-            result_text = response.text.strip() if response.text else "HR"
+        try:
+            response = requests.post(
+                self.endpoint,
+                json=payload,
+                timeout=30,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            result_text = (
+                data["candidates"][0]["content"]["parts"][0]["text"].strip()
+            )
 
             departments = [dept.strip() for dept in result_text.split(",") if dept.strip()]
             if not departments:
